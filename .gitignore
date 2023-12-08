@@ -2,8 +2,8 @@
 .vscode
 
 #
-/seismic_stream_test/waveforms/
-/seismic_stream_test/stream_practice/
+seismic_stream_test/waveforms/
+stream_practice/
 
 #
 TTSAM/model/
