@@ -1,0 +1,12 @@
+
+.vscode
+
+#
+/seismic_stream_test/waveforms/
+/seismic_stream_test/stream_practice/
+
+#
+TTSAM/model/
+TTSAM/predict/
+TTSAM/code/__pycache__/
+TTSAM/2016_sample.hdf5
