@@ -1,5 +1,7 @@
 import os
 from pyspark.sql import SparkSession
+from datetime import datetime, timedelta
+import pyspark
 from pyspark.sql.types import (
     StructType,
     StructField,
@@ -54,23 +56,29 @@ def process_batch(batch_df, epoch_id):
         batch_df.select("station").rdd.flatMap(lambda x: x).collect()
     ).to(torch.double)
     target_station = input_station
+    true_target_num=torch.sum(torch.all(target_station != 0, dim=-1)).item()
+    print(f"true_target_num: {true_target_num}")
     # model predict
     sample = {"waveform": waveform, "sta": input_station, "target": target_station}
+    print("model predicting...")
     weight, sigma, mu = full_Model(sample)
     pga = torch.sum(weight * mu, dim=2).cpu().detach().numpy()
-    print("model predicting...")
-    print(f"predicted_pga:{pga}")
+    print(f"output time:{(datetime.now()+ timedelta(hours=8)).strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"predicted_pga:{pga[:,:true_target_num]}")
 
 
 # 定義JSON文件的路徑
 TEST_DATA_DIR_SPARK = f"{os.getcwd()}/waveforms"
 print(TEST_DATA_DIR_SPARK)
 
-# 建立 SparkSession
-spark = (
-    SparkSession.builder.appName("SeismicStreamExample")
-    .getOrCreate()
-)
+# from pyspark import SparkConf
+# conf = SparkConf().setMaster("local")
+# conf.set("spark.executor.instances", "4")
+# # 建立 SparkSession
+# spark = (
+#     SparkSession.builder.config(conf=conf).appName("SeismicStreamExample")
+#     .getOrCreate()
+# )
 
 # 定義 JSON Schema
 seismic_waveform_schema = StructType(
@@ -97,11 +105,19 @@ json_stream_df = (
 # processed_df = json_stream_df.select("event_time")
 
 # 可設定不同query來分流需predict 的target stations
-query = (
+query1 = (
     json_stream_df.writeStream.outputMode(
         "append"
     )  # 輸出模式可以是 'append', 'complete', 或 'update'
     # .trigger(processingTime="5 seconds")
     .foreachBatch(process_batch).start()  # 使用自定義函數處理每一批資料
 )
-query.awaitTermination()
+query2 = (
+    json_stream_df.writeStream.outputMode(
+        "append"
+    )  # 輸出模式可以是 'append', 'complete', 或 'update'
+    # .trigger(processingTime="5 seconds")
+    .foreachBatch(process_batch).start()  # 使用自定義函數處理每一批資料
+)
+query1.awaitTermination()
+query2.awaitTermination()
