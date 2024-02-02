@@ -71,14 +71,14 @@ def process_batch(batch_df, epoch_id):
 TEST_DATA_DIR_SPARK = f"{os.getcwd()}/waveforms"
 print(TEST_DATA_DIR_SPARK)
 
-# from pyspark import SparkConf
-# conf = SparkConf().setMaster("local")
-# conf.set("spark.executor.instances", "4")
+from pyspark import SparkConf
+conf = SparkConf().setMaster("local")
+conf.set("spark.executor.instances", "4")
 # # 建立 SparkSession
-# spark = (
-#     SparkSession.builder.config(conf=conf).appName("SeismicStreamExample")
-#     .getOrCreate()
-# )
+spark = (
+    SparkSession.builder.config(conf=conf).appName("SeismicStreamExample")
+    .getOrCreate()
+)
 
 # 定義 JSON Schema
 seismic_waveform_schema = StructType(
